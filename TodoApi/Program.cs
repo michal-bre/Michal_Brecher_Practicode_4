@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TodoApi;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -6,14 +6,19 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 🔹 1. CORS – מדיניות ברירת מחדל שמתירה הכול
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 
+// 🔹 2. Auth + JWT – כמו שהיה
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer(options =>
     {
@@ -29,16 +34,19 @@ builder.Services.AddAuthentication("Bearer")
 
 builder.Services.AddAuthorization();
 
+// 🔹 3. DbContext – כמו שהיה, עם ה-ConnectionString "ToDoDB"
 builder.Services.AddDbContext<ToDoDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("ToDoDB"),
-    new MySqlServerVersion(new Version(8, 0, 44))));
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("ToDoDB"),
+        new MySqlServerVersion(new Version(8, 0, 44))));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.UseCors("AllowAll");
+// 🔹 4. בסדר הנכון בפייפליין
+app.UseCors();                 // 👈 בלי שם – מדיניות ברירת המחדל
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -47,7 +55,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 app.MapGet("/api/items", async (ToDoDbContext db, HttpContext ctx) =>
 {
