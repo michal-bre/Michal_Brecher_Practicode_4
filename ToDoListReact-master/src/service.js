@@ -49,7 +49,7 @@ export default {
   },
 
   async login(username, password) {
-    const result = await axios.post("/login", {
+    const result = await axios.post("api/login", {
       UserName: username,
       Password: password
     });
@@ -58,7 +58,7 @@ export default {
   },
 
   async register(username, password) {
-    const result = await axios.post("/register", {
+    const result = await axios.post("api/register", {
       UserName: username,
       Password: password
     });
