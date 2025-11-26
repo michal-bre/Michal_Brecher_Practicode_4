@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import service from "./service.js";
 import { Link } from "react-router-dom";
-import "./app.css"; // 👈 עיצוב
+import "./app.css";
 
 function App() {
   const [newTodo, setNewTodo] = useState("");

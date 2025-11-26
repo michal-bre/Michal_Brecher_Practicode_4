@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import service from "./service";
-import "./register.css"; // 👈 חשוב
+import "./register.css";
 
 export default function Register() {
   const [form, setForm] = useState({ userName: "", password: "" });
@@ -16,7 +16,7 @@ export default function Register() {
     if (/[A-Zא-ת]/.test(p)) s++;
     if (/[0-9]/.test(p)) s++;
     if (/[^A-Za-z0-9]/.test(p)) s++;
-    return s; // 0..4
+    return s;
   })();
 
   async function handleSubmit(e) {

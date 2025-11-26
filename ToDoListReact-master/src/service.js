@@ -1,6 +1,8 @@
 import axios from "axios";
 
-axios.defaults.baseURL = "http://localhost:5006/api";
+axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+
+axios.get("/api/items");
 
 axios.interceptors.request.use(config => {
   const token = localStorage.getItem("token");
@@ -20,29 +22,29 @@ axios.interceptors.response.use(
 
 export default {
   async getTasks() {
-    const result = await axios.get("/items");
+    const result = await axios.get("/api/items");
     return result.data;
   },
 
-async addTask(name) {
-  const result = await axios.post("/items", {
-    name: name,
-    isComplete: false
-  });
-  return result.data;
-},
+  async addTask(name) {
+    const result = await axios.post("/api/items", {
+      name: name,
+      isComplete: false
+    });
+    return result.data;
+  },
 
-async setCompleted(id, isComplete, currentName) {
-  const result = await axios.put(`/items/${id}`, {
-    id: id,
-    name: currentName,
-    isComplete: isComplete
-  });
-  return result.data;
-},
+  async setCompleted(id, isComplete, currentName) {
+    const result = await axios.put(`/api/items/${id}`, {
+      id: id,
+      name: currentName,
+      isComplete: isComplete
+    });
+    return result.data;
+  },
 
   async deleteTask(id) {
-    const result = await axios.delete(`/items/${id}`);
+    const result = await axios.delete(`/api/items/${id}`);
     return result.data;
   },
 
