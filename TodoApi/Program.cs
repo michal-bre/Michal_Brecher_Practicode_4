@@ -6,19 +6,18 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 1. CORS – מדיניות ברירת מחדל שמתירה הכול
+// 🔹 CORS – להתיר רק את הקליינט שלך
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("Client", policy =>
     {
         policy
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader();
+            .WithOrigins("https://todolistmichal.onrender.com")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
-// 🔹 2. Auth + JWT – כמו שהיה
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer(options =>
     {
@@ -34,7 +33,6 @@ builder.Services.AddAuthentication("Bearer")
 
 builder.Services.AddAuthorization();
 
-// 🔹 3. DbContext – כמו שהיה, עם ה-ConnectionString "ToDoDB"
 builder.Services.AddDbContext<ToDoDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("ToDoDB"),
@@ -45,8 +43,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 🔹 4. בסדר הנכון בפייפליין
-app.UseCors();                 // 👈 בלי שם – מדיניות ברירת המחדל
+// 🧱 סדר המידלוור חשוב
+app.UseCors("Client");        // 👈 חייב לפני המיפויים
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -55,6 +53,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 app.MapGet("/api/items", async (ToDoDbContext db, HttpContext ctx) =>
 {
