@@ -6,15 +6,16 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ CORS – מאפשר את הקליינט שלך
+// ✅ CORS – מדיניות בשם מפורש
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowClient", policy =>
     {
         policy
-            .WithOrigins("https://todolistmichal.onrender.com") // כתובת ה־React
+            .WithOrigins("https://todolistmichal.onrender.com")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -43,8 +44,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// ❗ סדר המידלוור
-app.UseCors();          // 👈 בלי שם – המדיניות הדיפולטית
+// ❗ סדר מדויק – הכי קריטי
+app.UseCors("AllowClient");   // ← חייב להיות ראשון
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -54,26 +55,30 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// ----------------------
+//      API ENDPOINTS
+// ----------------------
 
 app.MapGet("/api/items", async (ToDoDbContext db, HttpContext ctx) =>
 {
     var userName = ctx.User.Identity?.Name;
     var user = db.Users.FirstOrDefault(u => u.UserName == userName);
 
-    if (user == null) return Results.Unauthorized();
+    if (user == null)
+        return Results.Unauthorized();
 
     var items = db.Items.Where(i => i.UserId == user.Id).ToList();
     return Results.Ok(items);
 })
 .RequireAuthorization();
 
-
 app.MapPost("/api/items", async (ToDoDbContext db, Item newItem, HttpContext ctx) =>
 {
     var userName = ctx.User.Identity?.Name;
     var user = db.Users.FirstOrDefault(u => u.UserName == userName);
 
-    if (user == null) return Results.Unauthorized();
+    if (user == null)
+        return Results.Unauthorized();
 
     newItem.UserId = user.Id;
     db.Items.Add(newItem);
@@ -86,7 +91,8 @@ app.MapPost("/api/items", async (ToDoDbContext db, Item newItem, HttpContext ctx
 app.MapPut("/api/items/{id}", async (ToDoDbContext db, int id, Item updatedItem) =>
 {
     var existing = await db.Items.FindAsync(id);
-    if (existing is null) return Results.NotFound();
+    if (existing == null)
+        return Results.NotFound();
 
     existing.Name = updatedItem.Name;
     existing.IsComplete = updatedItem.IsComplete;
@@ -98,7 +104,8 @@ app.MapPut("/api/items/{id}", async (ToDoDbContext db, int id, Item updatedItem)
 app.MapDelete("/api/items/{id}", async (ToDoDbContext db, int id) =>
 {
     var item = await db.Items.FindAsync(id);
-    if (item is null) return Results.NotFound();
+    if (item == null)
+        return Results.NotFound();
 
     db.Items.Remove(item);
     await db.SaveChangesAsync();
@@ -106,6 +113,9 @@ app.MapDelete("/api/items/{id}", async (ToDoDbContext db, int id) =>
 })
 .RequireAuthorization();
 
+// ----------------------
+//   AUTH – NO AUTH HERE
+// ----------------------
 
 app.MapPost("/api/register", async (ToDoDbContext db, User user) =>
 {
@@ -115,36 +125,29 @@ app.MapPost("/api/register", async (ToDoDbContext db, User user) =>
     db.Users.Add(user);
     await db.SaveChangesAsync();
     return Results.Ok("Registered");
-});
+})
+.AllowAnonymous();
 
 app.MapPost("/api/login", async (ToDoDbContext db, User login) =>
 {
-    try
-    {
-        var user = db.Users.FirstOrDefault(u =>
-            u.UserName == login.UserName && u.Password == login.Password);
+    var user = db.Users.FirstOrDefault(u =>
+        u.UserName == login.UserName && u.Password == login.Password);
 
-        if (user == null)
-            return Results.Unauthorized();
+    if (user == null)
+        return Results.Unauthorized();
 
-        var claims = new[] { new Claim(ClaimTypes.Name, user.UserName) };
+    var claims = new[] { new Claim(ClaimTypes.Name, user.UserName) };
 
-        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes("SUPER_ULTRA_SECRET_KEY_1234567890!!"));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes("SUPER_ULTRA_SECRET_KEY_1234567890!!"));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var token = new JwtSecurityToken(
-            claims: claims,
-            expires: DateTime.Now.AddHours(1),
-            signingCredentials: creds);
+    var token = new JwtSecurityToken(
+        claims: claims,
+        expires: DateTime.Now.AddHours(1),
+        signingCredentials: creds);
 
-        return Results.Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("LOGIN ERROR: " + ex.Message);
-        return Results.StatusCode(500);
-    }
-});
-
+    return Results.Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+})
+.AllowAnonymous();
 
 app.Run();
