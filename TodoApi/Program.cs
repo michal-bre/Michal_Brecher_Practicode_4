@@ -6,13 +6,13 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 CORS – להתיר רק את הקליינט שלך
+// ✅ CORS – מאפשר את הקליינט שלך
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Client", policy =>
+    options.AddDefaultPolicy(policy =>
     {
         policy
-            .WithOrigins("https://todolistmichal.onrender.com")
+            .WithOrigins("https://todolistmichal.onrender.com") // כתובת ה־React
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -43,8 +43,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 🧱 סדר המידלוור חשוב
-app.UseCors("Client");        // 👈 חייב לפני המיפויים
+// ❗ סדר המידלוור
+app.UseCors();          // 👈 בלי שם – המדיניות הדיפולטית
 app.UseAuthentication();
 app.UseAuthorization();
 
