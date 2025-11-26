@@ -23,7 +23,7 @@ namespace TodoApi
             // ✅ Items table
             modelBuilder.Entity<Item>(entity =>
             {
-                entity.ToTable("items");
+                entity.ToTable("Items");
                 entity.HasKey(e => e.Id);        // חובה
                 entity.Property(e => e.Name).HasMaxLength(100);
             });
@@ -31,7 +31,7 @@ namespace TodoApi
             // ✅ Users table
             modelBuilder.Entity<User>(entity =>
             {
-                entity.ToTable("users");
+                entity.ToTable("Users");
                 entity.HasKey(e => e.Id);        // חובה!
                 entity.Property(e => e.UserName).HasMaxLength(50);
                 entity.Property(e => e.Password).HasMaxLength(50);
